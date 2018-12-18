@@ -1,6 +1,7 @@
 
 import re
 import scrapy
+from .. import util
 
 
 class QuoteworldSpider(scrapy.Spider):
@@ -19,11 +20,17 @@ class QuoteworldSpider(scrapy.Spider):
         elif '/browse_thetext_' in response.url and response.url.endswith('.html'):
             # Common tags for all the quotes on the page
             tags = response.xpath('//meta[@name="keywords"]/@content').extract_first()
-            tags = [t for t in tags.split(',') if t not in ('quote', 'quotation', 'famous')]
-            tags = [t for t in tags if not t.endswith('quote') and not t.endswith('quotation')]
+            tags = (t for t in tags.split(',')
+                    if t not in ('quote', 'quotation', 'famous')
+                    and not (
+                t.endswith('quote') or t.endswith('quotes') or t.endswith('quotation') or t.endswith('quotations')
+            ))
+            tags = sorted(set(tags))
+            self.logger.info(f'--- Scanning tags {tags} ---')
 
             for q in response.xpath('//tr/td[@width="516"][@valign="TOP"]'):
                 text = q.css('b::text').extract_first().strip('"')
+                text = text.replace('. . .', '...')
                 author = q.css('a.qlink::text').extract_first()
                 author = re.sub(r' \(.+?\)', '', author).strip()
                 yield {

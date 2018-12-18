@@ -8,21 +8,31 @@ from scrapy import Spider, Request
 from scrapy.exceptions import CloseSpider
 from bs4 import BeautifulSoup
 
-MAX_PAGES = 10
+MAX_PAGES = 3
 
 TOPICS = {
     'art': 't:132567',
+    'beauty': 't:132608',
+    'computers': 't:132570',
+    'friendship': 't:132578',
+    'good': 't:132656',
     'life': 't:132584',
-    'love': "t:132585",
+    'love': 't:132585',
+    'motivational': 't:132622',
     'success': 't:132597',
-    'wisdom': 't:132601'
+    'wisdom': 't:132601',
 }
 TOKENS = {
     'art': '472df6298178e7332dc3864fa0bc5321',
+    'beauty': 'a772f4ac071559552cee0783b7495f83',
+    'computers': '5b818fb79423ce78f16a5a5016b9b21b',
+    'friendship': '30432fd35e5fac68154c017c589238dd',
+    'good': '10765501cdb2ed919cca81ad29f1421f',
     'life': '407e2f46887fe58aca68f5dd3bda7b27',
-    'love': "4f8d17ad65c6c6a72d2ef0d410c0a1d0",
+    'love': '4f8d17ad65c6c6a72d2ef0d410c0a1d0',
+    'motivational': '7b363d749b4c7c684ace871c8a75f8e6',
     'success': '42ca14cae96f3f7cec1bd27f55d38919',
-    'wisdom': 'cd93282b6e64d2227c381d99b8a962d2'
+    'wisdom': 'cd93282b6e64d2227c381d99b8a962d2',
 }
 
 
@@ -66,7 +76,7 @@ class BrainyquoteSpider(Spider):
             "content-type": "application/json;charset=UTF-8"
         }
         body = {'id': TOPICS[topic], 'langc': 'en', 'pg': page,
-                'typ': 'topic', 'v': '8.5.7b:3079556', 'vid': TOKENS[topic]}
+                'typ': 'topic', 'v': '8.6.0b:3084179', 'vid': TOKENS[topic]}
 
         # To next page!
         page += 1

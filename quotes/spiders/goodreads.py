@@ -6,6 +6,7 @@
 import re
 import scrapy
 from bs4 import BeautifulSoup
+from .. import util
 
 PAGES = 0
 MAX_PAGES = 250 # The max is 100 anyway
@@ -50,13 +51,8 @@ class GoodreadsSpider(scrapy.Spider):
         [br.replace_with('\n') for br in soup.find_all('br')]
         text = soup.div.text.strip().rstrip('―').strip()
         del soup
-        # Fix quotes and 3 dots
-        text = text.replace('‘', "'").replace('’', "'")\
-            .replace('…', '...').replace('. . .', '...')
-        # Fix more than 3 dots
-        text = re.sub('\\.{3,99}', '...', text)
-        # Fix no space after comma
-        text = re.sub(',([a-zA-Z])', ', \\g<1>', text)
+        # Fix and normalize text
+        text = util.clean_text(text)
 
         # The rest of the elements are not a problem
         author = q.css('.quoteText .authorOrTitle::text')\
