@@ -1,7 +1,11 @@
-
+"""
+> scrapy crawl quoteworld -o quoteWorld.jl
+"""
 import re
 import scrapy
 from .. import util
+
+MAX_PAGES = 3
 
 
 class QuoteworldSpider(scrapy.Spider):
@@ -18,30 +22,35 @@ class QuoteworldSpider(scrapy.Spider):
                 yield response.follow(t)
         # This page contains quotes
         elif '/browse_thetext_' in response.url and response.url.endswith('.html'):
+            page = response.meta.get('page', 0)
+            if MAX_PAGES > 0 and page >= MAX_PAGES:
+                return
+            page += 1
+
             # Common tags for all the quotes on the page
             tags = response.xpath('//meta[@name="keywords"]/@content').extract_first()
-            tags = (t for t in tags.split(',')
-                    if t not in ('quote', 'quotation', 'famous')
-                    and not (
+            tags = (t for t in tags.split(',') \
+                if t not in ('quote', 'quotation', 'famous') \
+                and not (
                 t.endswith('quote') or t.endswith('quotes') or t.endswith('quotation') or t.endswith('quotations')
             ))
             tags = sorted(set(tags))
-            self.logger.info(f'--- Scanning tags {tags} ---')
+            self.logger.info(f'--- Scanning tags {tags}, page {page} ---')
 
             for q in response.xpath('//tr/td[@width="516"][@valign="TOP"]'):
                 text = q.css('b::text').extract_first().strip('"')
-                text = text.replace('. . .', '...')
+                text = util.clean_text(text)
                 author = q.css('a.qlink::text').extract_first()
                 author = re.sub(r' \(.+?\)', '', author).strip()
                 yield {
                     'text': text,
                     'author': author,
-                    'tags': tags
+                    'tags': tags,
                 }
             # Is there a next page?
             try:
                 next_page = response.css('tr td a.numbers::attr(href)')[-1].extract()
                 if len(next_page) > len('.html'):
-                    yield response.follow(next_page, callback=self.parse)
+                    yield response.follow(next_page, callback=self.parse, meta={'page': page})
             except Exception:
                 pass

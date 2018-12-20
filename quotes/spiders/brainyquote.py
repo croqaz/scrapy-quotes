@@ -1,5 +1,5 @@
 """
-> scrapy crawl brainyquote -o quotes.jl
+> scrapy crawl brainyquote -o quotesBrainy.jl
 """
 
 import json
@@ -47,7 +47,10 @@ class BrainyquoteSpider(Spider):
         # Continue to API
         for topic in TOPICS:
             parse_topic = partial(self.parse_api, topic, 1)
-            yield from parse_topic()
+            try:
+                yield from parse_topic()
+            except Exception:
+                pass
 
     def extract_html(self, q):
         text = q.css('.clearfix a.b-qt::text').extract_first().strip()
@@ -56,11 +59,11 @@ class BrainyquoteSpider(Spider):
         return {
             'text': text,
             'author': author,
-            'tags': sorted(tags)
+            'tags': sorted(tags),
         }
 
     def parse_api(self, topic, page=1, response=None):
-        if page > MAX_PAGES:
+        if MAX_PAGES > 0 and page > MAX_PAGES:
             return
 
         self.logger.info(f'--- API for {topic}, page {page} ---')
@@ -75,15 +78,25 @@ class BrainyquoteSpider(Spider):
             "accept-language": "en-US,en;q=0.9",
             "content-type": "application/json;charset=UTF-8"
         }
-        body = {'id': TOPICS[topic], 'langc': 'en', 'pg': page,
-                'typ': 'topic', 'v': '8.6.0b:3084179', 'vid': TOKENS[topic]}
+        body = {
+            'id': TOPICS[topic],
+            'langc': 'en',
+            'pg': page,
+            'typ': 'topic',
+            'v': '8.6.0b:3084179',
+            'vid': TOKENS[topic],
+        }
 
         # To next page!
         page += 1
 
         parse_topic = partial(self.parse_api, topic, page)
-        yield Request("https://www.brainyquote.com/api/inf", callback=parse_topic,
-                      method='POST', headers=h, body=json.dumps(body))
+        yield Request(
+            "https://www.brainyquote.com/api/inf",
+            callback=parse_topic,
+            method='POST',
+            headers=h,
+            body=json.dumps(body))
 
     def extract_json(self, q):
         try:
@@ -93,7 +106,7 @@ class BrainyquoteSpider(Spider):
             return {
                 'text': text,
                 'author': author,
-                'tags': sorted(tags)
+                'tags': sorted(tags),
             }
         except Exception:
             return
