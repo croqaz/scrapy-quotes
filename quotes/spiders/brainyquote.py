@@ -71,7 +71,7 @@ class BrainyquoteSpider(Spider):
         if response:
             body = json.loads(response.body)['content']
             for quote in BeautifulSoup(body, 'lxml').find_all('div', class_='boxy'):
-                yield self.extract_json(quote)
+                yield self.extract_json(quote, topic)
 
         h = {
             "accept": "application/json, text/javascript, */*; q=0.01",
@@ -98,10 +98,11 @@ class BrainyquoteSpider(Spider):
             headers=h,
             body=json.dumps(body))
 
-    def extract_json(self, q):
+    def extract_json(self, q, topic=None):
         try:
             text = q.find('a', class_='b-qt').text.strip()
-            tags = [a.text for a in q.find_all('a', class_='oncl_list_kc')]
+            tags = [a.text.lower() for a in q.find_all('a', class_='oncl_list_kc')]
+            tags.append(topic)
             author = q.find('a', class_='bq-aut').text.strip()
             return {
                 'text': text,
