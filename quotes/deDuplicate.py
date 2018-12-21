@@ -9,7 +9,6 @@ then the quotes automatically duplicated.
 import re
 import string
 import json
-import json_lines
 from util import clean_text
 
 
@@ -21,8 +20,14 @@ def de_duplicate(files, output):
     punct_regex = re.compile('[%s]' % re.escape(string.punctuation))
 
     for pth in files:
-        with open(pth, 'rb') as fd:
-            for item in json_lines.reader(fd):
+        with open(pth, 'rb') as reader:
+            lines_no = 0
+            for line in reader:
+                try:
+                    item = json.loads(line)
+                except:
+                    continue
+                lines_no += 1
                 # Fix and normalize text
                 item['text'] = clean_text(item['text'])
                 # Lower and strip punctuation
@@ -38,6 +43,7 @@ def de_duplicate(files, output):
                     item['tags'] = sorted(t.lower() for t in item['tags'])
                 # The dict KEY will automatically overwrite duplicates
                 items[txt] = item
+            print(f'Read {lines_no} items from "{pth}".')
 
     out_items = sorted(items.values(), key=lambda x: x['author'].lower())
     print(f'Written {len(out_items)} items in "{output}".')
@@ -45,4 +51,4 @@ def de_duplicate(files, output):
 
 
 if __name__ == '__main__':
-    de_duplicate(['brainyQuotes.jl', 'quoteWorld.jl'], 'unifiedQuotes.json')
+    de_duplicate(['quotesBrainy.jl', 'quoteWorld.jl'], 'unifiedQuotes.json')
