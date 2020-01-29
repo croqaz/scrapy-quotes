@@ -13,6 +13,16 @@ class QuoteworldSpider(scrapy.Spider):
     allowed_domains = ['quoteworld.org']
     start_urls = ['http://www.quoteworld.org/browse/topic.html']
 
+    def _fix_tags(self, tags):
+        new_tags = set()
+        for t in tags.split(','):
+            if t in ('quote', 'quotation', 'famous'):
+                continue
+            if t.endswith('quote') or t.endswith('quotes') or t.endswith('quotation') or t.endswith('quotations'):
+                continue
+            new_tags.add(t)
+        return sorted(new_tags)
+
     def parse(self, response):
         # Check the path before diving in
         # In this case, the page contains the topics
@@ -29,12 +39,7 @@ class QuoteworldSpider(scrapy.Spider):
 
             # Common tags for all the quotes on the page
             tags = response.xpath('//meta[@name="keywords"]/@content').extract_first()
-            tags = (t for t in tags.split(',') \
-                if t not in ('quote', 'quotation', 'famous') \
-                and not (
-                t.endswith('quote') or t.endswith('quotes') or t.endswith('quotation') or t.endswith('quotations')
-            ))
-            tags = sorted(set(tags))
+            tags = self._fix_tags(tags)
             self.logger.info(f'--- Scanning tags {tags}, page {page} ---')
 
             for q in response.xpath('//tr/td[@width="516"][@valign="TOP"]'):

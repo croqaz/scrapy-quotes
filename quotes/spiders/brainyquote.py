@@ -5,7 +5,6 @@
 import json
 from functools import partial
 from scrapy import Spider, Request
-from scrapy.exceptions import CloseSpider
 from bs4 import BeautifulSoup
 
 MAX_PAGES = 3

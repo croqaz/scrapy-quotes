@@ -3,13 +3,12 @@
 > scrapy crawl goodreads -o quotes.jl -a pages=3
 """
 
-import re
 import scrapy
 from bs4 import BeautifulSoup
 from .. import util
 
 PAGES = 0
-MAX_PAGES = 250 # The max is 100 anyway
+MAX_PAGES = 250  # The max is 100 anyway
 
 
 class GoodreadsSpider(scrapy.Spider):
@@ -28,7 +27,7 @@ class GoodreadsSpider(scrapy.Spider):
             if pages > 0:
                 MAX_PAGES = int(pages)
         except Exception as err:
-            print('Pages option error:', err)
+            self.logger.warning('Pages option error: %s', err)
         yield scrapy.Request(url, self.parse)
 
     def parse(self, response):
