@@ -17,10 +17,15 @@ class GoodreadsSpider(scrapy.Spider):
 
     def start_requests(self):
         global MAX_PAGES
-        url = 'https://www.goodreads.com/quotes/'
+        url = 'https://www.goodreads.com/'
         tag = getattr(self, 'tag', None)
+        author = getattr(self, 'author', None)
         if tag:
-            url = url + 'tag/' + tag
+            url = url + 'quotes/tag/' + tag
+        elif author:
+            url = url + 'author/quotes/' + author
+        else:
+            url = url + 'quotes/'
         pages = getattr(self, 'pages', 0)
         try:
             pages = int(pages)
@@ -45,13 +50,13 @@ class GoodreadsSpider(scrapy.Spider):
     def extract_one(self, q):
         # Cleaning the text is tricky
         soup = BeautifulSoup(q.css('.quoteText').extract_first(), 'lxml')
-        [x.decompose() for x in soup.find_all(class_='authorOrTitle')]
         [x.decompose() for x in soup.find_all('script')]
+        [x.decompose() for x in soup.find_all(class_='authorOrTitle')]
         [br.replace_with('\n') for br in soup.find_all('br')]
         text = soup.div.text.strip().rstrip('―').strip()
         del soup
         # Fix and normalize text
-        text = util.clean_text(text)
+        text = util.clean_text(text).replace('“', '').replace('”', '').strip()
 
         # The rest of the elements are not a problem
         author = q.css('.quoteText .authorOrTitle::text')\
